@@ -181,12 +181,14 @@ help()
 
 
 ###########
+import re
+
+def BOOKMARK():
+    print("This function is just a bookmark for VS Code's OUTINE VIEW")
 
 
-def get_student_info_from_full_url(full_url):
-    
+def get_student_info_from_full_url(driver,full_url):
     """Get the `uk-card-body` text from student's instruction.learn full url"""
-    driver = webdriver.Chrome()
     driver.get(full_url)
     my_html = driver.page_source
     student_soup = BeautifulSoup(my_html, 'html.parser')
@@ -195,12 +197,33 @@ def get_student_info_from_full_url(full_url):
     print('Function used to return the .text, now it returns the tag itself.')
     return student_info
 
+
 def make_instructor_learn_url(partial_url):
     """Prepends the base url to relative url for df.apply"""
     base_url = 'https://instruction.learn.co' + partial_url
     return base_url
 
+
 import re
+def get_urls_from_custom_badges(student_info_card):
+    """Accepts the student_info card from instruction.learn
+    profile.  Retreives the urls from the custom-badges div."""
+    links = student_info_card.find_all('a',href=True)
+    # learn_url = links[1]['href']
+
+
+    ## List of Links 
+    student_links = dict(
+        slack_url = [links[0]['href']],
+        learn_url = [links[1]['href']],
+        github_url = [links[2]['href']],
+        mailto_url = [links[3]['href']],
+        projects_url = [links[4]['href']], 
+        grad_dash_url = [links[5]['href']])
+    
+    return student_links
+
+
 def get_student_dict_from_student_info(student_info_tag):
     """Uses regex to parse info from student's
     instruction.learn.co/staff/students/____ page:
@@ -217,6 +240,12 @@ def get_student_dict_from_student_info(student_info_tag):
     import re
 
     student_dict = {}
+    
+    ## Get urls
+    student_urls= get_urls_from_custom_badges(student_info_tag)
+    for k,v in student_urls.items():
+        student_dict[k] = v
+
 
     ## Cohort Lead
     re_cohort_lead = re.compile(r"Cohort Lead: (\w* \w*)")
@@ -260,6 +289,8 @@ def get_student_dict_from_student_info(student_info_tag):
     return student_dict
 
 
+
+
 def get_program_info(program_info_tag):
     
     program_info = program_info_tag.text
@@ -285,6 +316,7 @@ def get_program_info(program_info_tag):
     
     return program_dict
     
+    
 
 def get_profile_info(profile_info_tag):
     
@@ -303,14 +335,15 @@ def get_profile_info(profile_info_tag):
     return profile_dict
 
 
+
+
+
 """tags = get_student_instruct_cards(full_url)
 student_data_dict =  process_student_instruct_cards(tags)"""
 
-def get_student_instruct_cards(full_url,driver = None):
+
+def get_student_instruct_cards(driver,full_url):
     """Get the `uk-card-body` text from student's instruction.learn full url"""
-    
-    if driver is None:
-        driver = webdriver.Chrome()
     driver.get(full_url)
     my_html = driver.page_source
     student_soup = BeautifulSoup(my_html, 'html.parser')
@@ -340,20 +373,76 @@ def process_student_instruct_cards(tags_with_cards):
     return student_info_dict 
     
     
-    def apply_student_info_retrieval(full_url):
-        import time 
-        time.sleep(2)
-        ## Using the streamlined functions
-        student_tags = get_student_instruct_cards(full_url)
-        student_dict = process_student_instruct_cards(student_tags)
+def apply_student_info_retrieval(full_url):
+    import time 
+    time.sleep(2)
+    ## Using the streamlined functions
+    student_tags = get_student_instruct_cards(full_url)
+    student_dict = process_student_instruct_cards(student_tags)
 
 
-        student_row = pd.Series(student_dict['student_info'])
-        for k,v in student_dict['program_info'].items():
-            student_row[k]=v
+    student_row = pd.Series(student_dict['student_info'])
+    for k,v in student_dict['program_info'].items():
+        student_row[k]=v
 
-        for k,v in student_dict['profile_info'].items():
-            student_row[k]=v    
+    for k,v in student_dict['profile_info'].items():
+        student_row[k]=v    
 
-        return student_row
+    return student_row
 
+
+def load_full_student_progress(driver,learn_url):
+#     driver.get(test_url)
+    driver.get(learn_url)
+    import time
+    time.sleep(3)
+    my_html = driver.page_source
+    soup = BeautifulSoup(my_html, 'html.parser')
+    
+    soup.find('h4', class_ = 'heading heading--level-6 heading--color-green heading--font-size-larger heading--weight-bolder').text
+    
+    while True:
+        try:
+            lm = driver.find_element_by_xpath("//*[contains(text(), 'Load more')]")
+            lm.click()
+            time.sleep(2)
+        except:
+            break
+    
+    
+    return BeautifulSoup(driver.page_source)
+
+
+def get_progress_from_soup(soup):
+    first_date = soup.findAll('div', 
+                          class_ = 'module module--flush-wings util--padding-tl util--padding-bl')[0]
+#     lessons = first_date.find('ul',
+#                           class_ = 'list list--spacing-large list--separators-grey-faintest')
+    
+#     # lessons
+#     for l_lesson in lessons.findAll('div', class_ = 'media-block__content'):
+#         print(l_lesson.find('a').text)
+        
+    # iterate through the entire 
+    all_labs = soup.findAll('div', 
+                              class_ = 'module module--flush-wings util--padding-tl util--padding-bl')
+
+    dates_list = []
+    lessons_list = []
+
+    for d in all_labs:
+        date = d.find('div', 
+                      class_ = 'heading heading--level-2 heading--color-grey-light').text
+        lessons = d.find('ul',
+                              class_ = 'list list--spacing-large list--separators-grey-faintest')
+        for l_lesson in lessons.findAll('div', class_ = 'media-block__content'):
+            dates_list.append(date)
+            lessons_list.append(l_lesson.find('a').text)
+            print(l_lesson.find('a').text)
+            
+            
+            
+    df_lessons = pd.DataFrame({'dates': dates_list,
+                          'lesson': lessons_list})
+    
+    return df_lessons
