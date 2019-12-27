@@ -297,7 +297,19 @@ def get_program_info(program_info_tag):
     
     program_dict = {}
     
-    re_coach_sess= re.compile(r"Touchpoints: (\d{1,2}) (of (\d{1,2}))?") #"Touchpoints: (\d{1,2}) of (\d{1,2})")
+    re_coach_sess= re.compile(
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        r"Touchpoints: (\d{1,2}) (of (\d{1,2}))?") #"Touchpoints: (\d{1,2}) of (\d{1,2})")
     num_ed_coach_sess = re_coach_sess.findall(program_info)
     
     num_used= num_ed_coach_sess[0][0]
