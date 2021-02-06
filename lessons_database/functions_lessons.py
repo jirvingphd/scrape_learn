@@ -3,10 +3,8 @@ import json
 import mysql.connector
 import sqlalchemy
 import pymysql
-import doesntexist
-import string
 
-print(variable)
+import string
 
 def get_databases(cur,verbose=True):
     """[summary]
@@ -81,4 +79,3 @@ def clean_df_columns_for_sql(df,replace_dict = {
 
     df.columns = fixed_cols
     return df
-
