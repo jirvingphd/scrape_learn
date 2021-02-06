@@ -4,6 +4,7 @@ import mysql.connector
 import sqlalchemy
 import pymysql
 
+import string
 
 def get_databases(cur,verbose=True):
     """[summary]
@@ -56,4 +57,26 @@ host='localhost',database = "lessons"):
     engine = sqlalchemy.create_engine(cmd)
 
     return mydb, cur,engine
+
+
+def clean_df_columns_for_sql(df,replace_dict = {
+    "Type":"Repo_Type",'index':'number index'},space_replace='_'):
+
+    
+    df = df.rename(replace_dict,axis=1).copy()
+
+    # Remove punctuation/spaces
+    bad_chars = string.punctuation
+
+    fixed_cols = []
+    for c in df.columns:
+        for char in bad_chars:
+            c = c.replace(char,'')
+        # print(c_new)
+
+        c_new = c.replace(' ',space_replace)
+        fixed_cols.append(c_new)
+
+    df.columns = fixed_cols
+    return df
 
