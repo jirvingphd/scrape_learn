@@ -3,8 +3,10 @@ import json
 import mysql.connector
 import sqlalchemy
 import pymysql
-
+import doesntexist
 import string
+
+print(variable)
 
 def get_databases(cur,verbose=True):
     """[summary]
